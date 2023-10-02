@@ -35,9 +35,10 @@
    **/
 	 private JvnServerImpl() throws Exception {
 		 super();
-		 Registry registry = LocateRegistry.getRegistry("localhost", 6000);
+		 Registry registry = LocateRegistry.getRegistry( 6000);
 		 jvnRemoteCoord = (JvnRemoteCoord) registry.lookup("coord");
-		 // to be completed
+
+
 	 }
 	 
    /**
@@ -49,7 +50,11 @@
 		 if (js == null){
 			 try {
 				 js = new JvnServerImpl();
+				 System.out.println("test");
+
 			 } catch (Exception e) {
+				 System.out.println(e);
+
 				 return null;
 			 }
 		 }
@@ -78,9 +83,8 @@
 		JvnObjectImpl jvo = new JvnObjectImpl(o);
 		 JvnObject jvo_stub = null;
 		try {
-			jvo_stub = (JvnObject) UnicastRemoteObject.exportObject(jvo, 6000);
+			jvo_stub = (JvnObjectImpl) UnicastRemoteObject.exportObject(jvo, 6000);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		 return jvo_stub;
@@ -93,7 +97,11 @@
 	 * @throws JvnException
 	 **/
 	 public  void jvnRegisterObject(String jon, JvnObject jo) throws jvn.JvnException {
-		 // to be completed 
+		 try {
+			 jvnRemoteCoord.jvnRegisterObject(jon, jo, this);
+		 } catch (RemoteException e) {
+			 throw new RuntimeException(e);
+		 }
 	 }
 	 
 	 /**

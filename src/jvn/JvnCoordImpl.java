@@ -12,17 +12,25 @@
  import java.rmi.registry.LocateRegistry;
  import java.rmi.registry.Registry;
  import java.rmi.server.UnicastRemoteObject;
-import java.util.Hashtable;
+ import java.util.ArrayList;
+ import java.util.Hashtable;
 import java.io.Serializable;
- 
- 
- public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
+ import java.util.List;
+
+
+public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
    /**
     * 
     */
    private static final long serialVersionUID = 1L;
+   private int joi = 0;
+     private int jsi = 0;
  
-  private Hashtable<String, JvnObject> hashTableJvo;
+  private Hashtable<String, JvnObject> hashTableJon;
+     private Hashtable<Integer, JvnObject> hashTableJoi;
+     private Hashtable<Integer, JvnRemoteServer> hashTableJs;
+
+     private Hashtable<Integer, List<JvnRemoteServer>> hashTableJoiJs;
 
   private Registry registry;
  /**
@@ -34,11 +42,30 @@ import java.io.Serializable;
      // creer tableau avec [objet_reference, alias]
      //cretaion du serveur le port
      //tableau avec jvns ids
-     hashTableJvo = new Hashtable<>();
-     JvnRemoteCoord coord_stub = (JvnRemoteCoord) UnicastRemoteObject.exportObject(this, 6000);
-     registry = LocateRegistry.getRegistry();
-     registry.rebind("coord", coord_stub);
+     hashTableJon = new Hashtable<>();
+     registry = LocateRegistry.createRegistry(6000);
+
+         JvnRemoteCoord coord_stub = (JvnRemoteCoord) UnicastRemoteObject.toStub(this);
+         registry.rebind("coord", coord_stub);
+
    }
+
+    public static JvnCoordImpl jvnGetCoord() throws Exception {
+       return new JvnCoordImpl();
+
+//        if (js == null){
+//            try {
+//                js = new JvnServerImpl();
+//                System.out.println("test");
+//
+//            } catch (Exception e) {
+//                System.out.println(e);
+//
+//                return null;
+//            }
+//        }
+//        return js;
+    }
  
    /**
    *  Allocate a NEW JVN object id (usually allocated to a 
@@ -61,7 +88,13 @@ import java.io.Serializable;
    * @throws java.rmi.RemoteException,JvnException
    **/
    public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws java.rmi.RemoteException,jvn.JvnException{
-     // to be completed 
+        hashTableJon.put(jon, jo);
+        hashTableJoi.put(joi++, jo);
+        hashTableJs.put(jsi++, js);
+        hashTableJoiJs.put(joi, new ArrayList<>());
+        hashTableJoiJs.get(joi).add(js);
+
+       // to be completed
      // mettre a jour le tableau
    }
    
@@ -74,7 +107,7 @@ import java.io.Serializable;
    public JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws java.rmi.RemoteException,jvn.JvnException{
      // rutilser js
      System.out.println("lookup sur " + jon);
-    return hashTableJvo.get(jon);
+    return hashTableJon.get(jon);
    }
    
    /**
