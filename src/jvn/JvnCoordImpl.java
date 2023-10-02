@@ -9,6 +9,7 @@
 
  package jvn;
 
+ import java.rmi.RemoteException;
  import java.rmi.registry.LocateRegistry;
  import java.rmi.registry.Registry;
  import java.rmi.server.UnicastRemoteObject;
@@ -37,16 +38,13 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
    * Default constructor
    * @throws JvnException
    **/
-   private JvnCoordImpl() throws Exception {
+ JvnCoordImpl() throws Exception {
      // to be completed
      // creer tableau avec [objet_reference, alias]
      //cretaion du serveur le port
      //tableau avec jvns ids
      hashTableJon = new Hashtable<>();
-     registry = LocateRegistry.createRegistry(6000);
 
-         JvnRemoteCoord coord_stub = (JvnRemoteCoord) UnicastRemoteObject.toStub(this);
-         registry.rebind("coord", coord_stub);
 
    }
 
@@ -72,7 +70,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
    *  newly created JVN object)
    * @throws java.rmi.RemoteException,JvnException
    **/
-   public int jvnGetObjectId() throws java.rmi.RemoteException,jvn.JvnException {
+   public int jvnGetObjectId() throws java.rmi.RemoteException, jvn.JvnException {
      // to be completed 
      // prend un id disponible, modification des donnees a faire
      //retourne l id utilise
@@ -87,8 +85,9 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
    * @param js  : the remote reference of the JVNServer
    * @throws java.rmi.RemoteException,JvnException
    **/
-   public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws java.rmi.RemoteException,jvn.JvnException{
-        hashTableJon.put(jon, jo);
+   public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws java.rmi.RemoteException, jvn.JvnException{
+       System.out.println("register ");
+       hashTableJon.put(jon, jo);
         hashTableJoi.put(joi++, jo);
         hashTableJs.put(jsi++, js);
         hashTableJoiJs.put(joi, new ArrayList<>());
@@ -104,7 +103,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
    * @param js : the remote reference of the JVNServer
    * @throws java.rmi.RemoteException,JvnException
    **/
-   public JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws java.rmi.RemoteException,jvn.JvnException{
+   public JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws java.rmi.RemoteException, jvn.JvnException{
      // rutilser js
      System.out.println("lookup sur " + jon);
     return hashTableJon.get(jon);

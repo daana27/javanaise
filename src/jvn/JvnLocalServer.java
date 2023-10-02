@@ -10,6 +10,7 @@
 
 package jvn;
 import java.io.Serializable;
+import java.rmi.RemoteException;
 
 /**
  * Local interface of a JVN server  (used by the applications).
@@ -35,7 +36,7 @@ public interface JvnLocalServer {
 	* @throws JvnException
 	**/
 	public  void jvnRegisterObject(String jon, JvnObject jo)
-	throws jvn.JvnException; 
+			throws jvn.JvnException, RemoteException;
 	
 	/**
 	* Get the reference of a JVN object associated to a symbolic name

@@ -35,10 +35,8 @@
    **/
 	 private JvnServerImpl() throws Exception {
 		 super();
-		 Registry registry = LocateRegistry.getRegistry( 6000);
+		 Registry registry = LocateRegistry.getRegistry( 6090);
 		 jvnRemoteCoord = (JvnRemoteCoord) registry.lookup("coord");
-
-
 	 }
 	 
    /**
@@ -78,16 +76,8 @@
 	 * @param o : the JVN object state
 	 * @throws JvnException
 	 **/
-	 public  JvnObject jvnCreateObject(Serializable o) throws jvn.JvnException { 
-		 // to be completed 
-		JvnObjectImpl jvo = new JvnObjectImpl(o);
-		 JvnObject jvo_stub = null;
-		try {
-			jvo_stub = (JvnObjectImpl) UnicastRemoteObject.exportObject(jvo, 6000);
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-		 return jvo_stub;
+	 public  JvnObject jvnCreateObject(Serializable o) throws jvn.JvnException {
+		 return new JvnObjectImpl(o);
 	 }
 	 
 	 /**
@@ -96,12 +86,8 @@
 	 * @param jo : the JVN object 
 	 * @throws JvnException
 	 **/
-	 public  void jvnRegisterObject(String jon, JvnObject jo) throws jvn.JvnException {
-		 try {
+	 public  void jvnRegisterObject(String jon, JvnObject jo) throws jvn.JvnException, RemoteException {
 			 jvnRemoteCoord.jvnRegisterObject(jon, jo, this);
-		 } catch (RemoteException e) {
-			 throw new RuntimeException(e);
-		 }
 	 }
 	 
 	 /**
@@ -114,7 +100,10 @@
 	 public  JvnObject jvnLookupObject(String jon) throws jvn.JvnException{
 	
 		try {
-			return jvnRemoteCoord.jvnLookupObject(jon, this);
+			System.out.println("lookup");
+			JvnObject test = jvnRemoteCoord.jvnLookupObject(jon, this);
+			System.out.println(test);
+			return test;
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return null;
