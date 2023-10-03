@@ -44,8 +44,6 @@ public class Irc {
 		}
 		// create the graphical part of the Chat application
 		 new Irc(jo);
-		   jo = js.jvnLookupObject("IRC");
-		   System.out.println(jo);
 	   } catch (Exception e) {
 		   System.out.println("IRC problem : " + e.getMessage());
 	   }
