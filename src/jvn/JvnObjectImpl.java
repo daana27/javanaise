@@ -3,17 +3,29 @@ package jvn;
 import java.io.Serializable;
 
 public class JvnObjectImpl implements JvnObject{
-
+    State state;
     Serializable object;
-
+    int joi;
     JvnObjectImpl(Serializable o){
         object = o;
+        state = State.NL;
+    }
+
+    public void setId(int joi){
+        this.joi = joi;
+    }
+
+    public void setState(State st){
+        state = st;
+    }
+
+    public State getState(){
+        return state;
     }
 
     @Override
     public void jvnLockRead() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnLockRead'");
+        JvnServerImpl.jvnGetServer().jvnLockRead(joi);
     }
 
     @Override
@@ -57,5 +69,7 @@ public class JvnObjectImpl implements JvnObject{
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'jvnInvalidateWriterForReader'");
     }
-    
+
+
+
 }

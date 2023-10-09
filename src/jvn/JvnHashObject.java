@@ -7,20 +7,34 @@ public class JvnHashObject {
     private String jon;
     private JvnObject jo;
     private int joi;
-    private List<JvnRemoteServer> jrs;
-    private JvnRemoteServer js;
+    private List<JvnRemoteServer> jrsInUse;
+    private List<JvnRemoteServer> jsWantLock;
+    private List<JvnRemoteServer> jsCurrentLock;
 
     public JvnHashObject(String jon, JvnObject jo, JvnRemoteServer js, int joi){
+        jrsInUse = new ArrayList<>();
+        jsWantLock = new ArrayList<>();
+        jsCurrentLock = new ArrayList<>();
         this.jon = jon;
         this.jo = jo;
-        this.js = js;
         this.joi = joi;
-        jrs = new ArrayList<>();
-        jrs.add(js);
+        jo.setId(joi);
+        jrsInUse.add(js);
     }
 
     public JvnObject getJvnObject(){
         return jo;
+    }
+    public JvnObject getObject(){
+        return jo;
+    }
+
+    public void addJrsInUse(JvnRemoteServer jrs){
+        jrsInUse.add(jrs);
+    }
+
+    public void addToJsLock(JvnRemoteServer jrs){
+        jsCurrentLock.add(jrs);
     }
     public int getJvnObjectId(){
         return joi;
@@ -31,26 +45,29 @@ public class JvnHashObject {
     }
 
     public List<JvnRemoteServer> getJvnObjectServerList(){
-        return jrs;
+        return jrsInUse;
     }
     public boolean isJvnServerUsing(JvnRemoteServer js){
-        return jrs.contains(js);
+        return jrsInUse.contains(js);
     }
 
     public void addJvnServer(JvnRemoteServer js){
-        jrs.add(js);
+        jrsInUse.add(js);
     }
 
     public int removeJvnServer(JvnRemoteServer js){
         if (this.isJvnServerUsing(js))
-            jrs.remove(js);
-        return jrs.size();
+            jrsInUse.remove(js);
+        return jrsInUse.size();
+    }
+    public List<JvnRemoteServer> getListServerLock(){
+        return jsCurrentLock;
     }
 
     @Override
     public String toString(){
         return "Nom: " + jon + "\n"+
                 "Id: " + joi + "\n"+
-                "Nombre d'utilisateurs : " + jrs.size();
+                "Usage : " + jrsInUse.size();
     }
 }

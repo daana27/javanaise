@@ -14,6 +14,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Hashtable;
 import java.io.Serializable;
 import java.util.Iterator;
+import java.util.List;
 
 public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
     /**
@@ -92,10 +93,18 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public Serializable jvnLockRead(int joi, JvnRemoteServer js) throws java.rmi.RemoteException, JvnException{
-        // to be completed
-        // demande un lock
-        // lock + mise a jour du tableau
-        return null;
+        JvnHashObject hashObject = hashTableIdtoHashObject.get(joi);
+        JvnObject jvnObject = hashObject.getObject();
+        if(jvnObject.getState() == JvnObject.State.NL || jvnObject.getState() == JvnObject.State.R){
+            jvnObject.setState(JvnObject.State.R);
+            hashObject.addToJsLock(js);
+            return (Serializable) jvnObject.getState();
+        } else {
+            JvnRemoteServer jsLock = hashObject.getListServerLock().get(0);
+            Serializable sr = jsLock.jvnInvalidateWriterForReader(joi);
+            jvnObject.setState(JvnObject.State.R);
+            return sr;
+        }
     }
 
     /**
@@ -106,11 +115,21 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws java.rmi.RemoteException, JvnException{
-        // to be completed
-        // demande un lock
-        // lock + mise a jour du tableau
+        JvnHashObject hashObject = hashTableIdtoHashObject.get(joi);
+        JvnObject jvnObject = hashObject.getObject();
+        JvnObject.State state = jvnObject.getState();
+        if(state == JvnObject.State.NL){
+            jvnObject.setState(JvnObject.State.W);
+            hashObject.addToJsLock(js);
+            return (Serializable) jvnObject.getState();
+        } else if(state == JvnObject.State.R){
+            List<JvnRemoteServer> jsLock = hashObject.getListServerLock();
+
+            return null;
+        }
         return null;
     }
+
 
     /**
      * A JVN server terminates

@@ -26,7 +26,7 @@ public class JvnServerImpl
 	 */
 	private static final long serialVersionUID = 1L;
 	// A JVN server is managed as a singleton
-	private static JvnServerImpl js = null;
+	private static JvnServerImpl js = null ;
 
 	private JvnRemoteCoord jvnRemoteCoord = null;
 	/**
@@ -134,9 +134,14 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public void jvnInvalidateReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		// to be completed
-	};
+		JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(getJvnObjectName(joi), js);
+		jvnObject.jvnUnLock();
+	}
 
+	private String getJvnObjectName(int joi){
+		return "";
+
+	}
 	/**
 	 * Invalidate the Write lock of the JVN object identified by id 
 	 * @param joi : the JVN object id
@@ -144,7 +149,8 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public Serializable jvnInvalidateWriter(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		// to be completed
+		JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(getJvnObjectName(joi), js);
+		jvnObject.jvnUnLock();
 		return null;
 	};
 
