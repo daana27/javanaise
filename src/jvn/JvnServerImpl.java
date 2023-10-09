@@ -75,7 +75,13 @@ public class JvnServerImpl
 	 * @throws JvnException
 	 **/
 	public  JvnObject jvnCreateObject(Serializable o) throws jvn.JvnException {
-		return new JvnObjectImpl(o);
+		int joi;
+		try {
+			joi = jvnRemoteCoord.jvnGetObjectId();
+		} catch (RemoteException e) {
+			throw new RuntimeException(e);
+		}
+		return new JvnObjectImpl(o, joi);
 	}
 
 	/**
@@ -85,7 +91,9 @@ public class JvnServerImpl
 	 * @throws JvnException
 	 **/
 	public  void jvnRegisterObject(String jon, JvnObject jo) throws jvn.JvnException, RemoteException {
+		joiToJvnObject.put(jo.jvnGetObjectId(), jo);
 		jvnRemoteCoord.jvnRegisterObject(jon, jo, this);
+
 	}
 
 	/**
@@ -116,7 +124,7 @@ public class JvnServerImpl
 	 **/
 	public Serializable jvnLockRead(int joi) throws JvnException {
 		try {
-			jvnRemoteCoord.jvnLockRead(joi, this);
+			joiToJvnObject.put(joi, (JvnObject) jvnRemoteCoord.jvnLockRead(joi, this));
 			return joiToJvnObject.get(joi);
 		} catch (RemoteException e) {
 			throw new RuntimeException(e);
@@ -130,8 +138,11 @@ public class JvnServerImpl
 	 * @throws  JvnException
 	 **/
 	public Serializable jvnLockWrite(int joi) throws JvnException {
-		// to be completed
-		return null;
+		try {
+			return jvnRemoteCoord.jvnLockWrite(joi, this);
+		} catch (RemoteException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 

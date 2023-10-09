@@ -8,28 +8,27 @@ public class JvnHashObject {
     private JvnObject jo;
     private int joi;
     private List<JvnRemoteServer> jrsInUse;
-    private List<JvnRemoteServer> jsWantLock;
     private List<JvnRemoteServer> jsCurrentLock;
 
     public JvnHashObject(String jon, JvnObject jo, JvnRemoteServer js, int joi){
         jrsInUse = new ArrayList<>();
-        jsWantLock = new ArrayList<>();
         jsCurrentLock = new ArrayList<>();
         this.jon = jon;
         this.jo = jo;
         this.joi = joi;
-        jo.setId(joi);
+        jsCurrentLock.add(js);
+        this.jo.setId(joi);
         jrsInUse.add(js);
     }
 
+    public void deleteLockServer(){
+        jsCurrentLock.remove(0);
+    }
     public JvnObject getJvnObject(){
         return jo;
     }
     public void setJvnObject(JvnObject jo){
         this.jo = jo;
-    }
-    public JvnObject getObject(){
-        return jo;
     }
 
     public void addJrsInUse(JvnRemoteServer jrs){

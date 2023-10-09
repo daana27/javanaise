@@ -58,9 +58,13 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      **/
     public void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws java.rmi.RemoteException, jvn.JvnException{
         System.out.println("jcoord: register");
-        int joitmp = this.jvnGetObjectId();
-        hashTableNameToId.put(jon, joitmp);
-        hashTableIdtoHashObject.put(joitmp, new JvnHashObject(jon, jo, js, joitmp));
+        int id = jo.jvnGetObjectId();
+        if(hashTableIdtoHashObject.get(id) != null || hashTableNameToId.get(jon) != null)
+            System.out.println("objet deja existant ! ");
+        hashTableNameToId.put(jon, id);
+        hashTableIdtoHashObject.put(id, new JvnHashObject(jon, jo, js, id));
+        System.out.println("joitmp = " + id + " joi = " + joi);
+        System.out.println(hashTableIdtoHashObject.get(id).getJvnObject().getState());
     }
 
     /**
@@ -93,16 +97,23 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public Serializable jvnLockRead(int joi, JvnRemoteServer js) throws java.rmi.RemoteException, JvnException{
+        System.out.println("Coord jvnLockRead : " + joi);
+        System.out.println("taille liste = " + hashTableIdtoHashObject.size());
         JvnHashObject hashObject = hashTableIdtoHashObject.get(joi);
-        JvnObject jvnObject = hashObject.getObject();
-        if(jvnObject.getState() == JvnObject.State.NL || jvnObject.getState() == JvnObject.State.R){
+        System.out.println("hashobject id : " + hashObject.getJvnObjectId());
+        System.out.println("hashobject object : " + hashObject.getJvnObject());
+        JvnObject jvnObject = hashObject.getJvnObject();
+        JvnObject.State state = jvnObject.getState();
+        if(state == JvnObject.State.NL || state == JvnObject.State.R){
             jvnObject.setState(JvnObject.State.R);
             hashObject.addToJsLock(js);
-            return (Serializable) jvnObject.getState();
+            return jvnObject;
         } else {
+            System.out.println("state = " + state);
             JvnRemoteServer jsLock = hashObject.getListServerLock().get(0);
             Serializable sr = jsLock.jvnInvalidateWriterForReader(joi);
             hashTableIdtoHashObject.get(joi).setJvnObject((JvnObject) sr);
+            jvnObject.setState(JvnObject.State.R);
             return sr;
         }
     }
@@ -115,17 +126,29 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws java.rmi.RemoteException, JvnException{
+        System.out.println("Coord : jvnLockWrite : " + joi);
         JvnHashObject hashObject = hashTableIdtoHashObject.get(joi);
-        JvnObject jvnObject = hashObject.getObject();
+        JvnObject jvnObject = hashObject.getJvnObject();
         JvnObject.State state = jvnObject.getState();
         if(state == JvnObject.State.NL){
             jvnObject.setState(JvnObject.State.W);
             hashObject.addToJsLock(js);
-            return (Serializable) jvnObject.getState();
-        } else if(state == JvnObject.State.R){
+            return jvnObject;
+        } else if (state == JvnObject.State.R){
             List<JvnRemoteServer> jsLock = hashObject.getListServerLock();
-
-            return null;
+            for (JvnRemoteServer jrs : jsLock) {
+                jrs.jvnInvalidateReader(hashObject.getJvnObjectId());
+            }
+            jvnObject.setState(JvnObject.State.W);
+            return jvnObject;
+        } else if(state == JvnObject.State.W){
+            JvnRemoteServer jsLock = hashObject.getListServerLock().get(0);
+            Serializable sr = jsLock.jvnInvalidateWriter(joi);
+            hashTableIdtoHashObject.get(joi).setJvnObject((JvnObject) sr);
+            hashObject.deleteLockServer();
+            hashObject.addToJsLock(js);
+            //jvnObject.setState(JvnObject.State.W);
+            return sr;
         }
         return null;
     }

@@ -6,9 +6,10 @@ public class JvnObjectImpl implements JvnObject{
     State state;
     Serializable object;
     int joi;
-    JvnObjectImpl(Serializable o){
+    JvnObjectImpl(Serializable o, int joi){
         object = o;
         state = State.W;
+        this.joi = joi;
     }
 
     public void setId(int joi){
@@ -25,11 +26,15 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public void jvnLockRead() throws JvnException {
+        System.out.println("joi de l objet = " + joi);
         if(state == State.RC){
             state = State.R;
-        }
-        else{
-            JvnServerImpl.jvnGetServer().jvnLockRead(joi);
+        } else if(state == State.NL){
+            state = State.R;
+            object = JvnServerImpl.jvnGetServer().jvnLockRead(joi);
+        } else if(state == State.W || state == State.WC){
+            state = State.RWC;
+            object = JvnServerImpl.jvnGetServer().jvnLockRead(joi);
         }
     }
 
@@ -38,7 +43,8 @@ public class JvnObjectImpl implements JvnObject{
         if(state == State.WC || state == State.RWC){
             state = State.W;
         } else if (state == State.RC || state == State.R ||state == State.NL ) {
-            JvnServerImpl.jvnGetServer().jvnLockWrite(joi);
+            state = State.W;
+            object = JvnServerImpl.jvnGetServer().jvnLockWrite(joi);
         }
     }
 
@@ -59,7 +65,7 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public Serializable jvnGetSharedObject() throws JvnException {
-        return this;
+        return object;
     }
 
     @Override
@@ -100,8 +106,22 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnInvalidateWriterForReader'");
+        if(state == State.RWC || state == State.WC){
+            state = State.R;
+            return this;
+        } else if(state == State.W){
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+            state = State.R;
+            return this;
+        } else{
+            System.out.println("etat non concordant avec invalidate writer for reader");
+            return null;
+        }
     }
 
 
