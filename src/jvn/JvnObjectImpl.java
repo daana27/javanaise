@@ -25,47 +25,81 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public void jvnLockRead() throws JvnException {
-        JvnServerImpl.jvnGetServer().jvnLockRead(joi);
+        if(state == State.RC){
+            state = State.R;
+        }
+        else{
+            JvnServerImpl.jvnGetServer().jvnLockRead(joi);
+        }
     }
 
     @Override
     public void jvnLockWrite() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnLockWrite'");
+        if(state == State.WC || state == State.RWC){
+            state = State.W;
+        } else if (state == State.RC || state == State.R ||state == State.NL ) {
+            JvnServerImpl.jvnGetServer().jvnLockWrite(joi);
+        }
     }
 
     @Override
-    public void jvnUnLock() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnUnLock'");
+    public synchronized void jvnUnLock() throws JvnException {
+        if(state == State.R){
+          state = State.RC;
+        } else if(state == State.W){
+            state = State.WC;
+        }
+        notifyAll();
     }
 
     @Override
     public int jvnGetObjectId() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnGetObjectId'");
+        return joi;
     }
 
     @Override
     public Serializable jvnGetSharedObject() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnGetSharedObject'");
+        return this;
     }
 
     @Override
-    public void jvnInvalidateReader() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnInvalidateReader'");
+    public synchronized void jvnInvalidateReader() throws JvnException {
+        if(state == State.RWC || state == State.RC){
+            state = State.NL;
+        }
+        else if(state == State.W){
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+            state = State.NL;
+        }
     }
 
     @Override
-    public Serializable jvnInvalidateWriter() throws JvnException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'jvnInvalidateWriter'");
+    public synchronized Serializable jvnInvalidateWriter() throws JvnException {
+        if(state == State.RWC || state == State.WC){
+            state = State.NL;
+            return this;
+        } else if(state == State.W){
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+            state = State.NL;
+            return this;
+        } else{
+            System.out.println("etat non concordant avec invalidate writer");
+            return null;
+        }
     }
 
     @Override
-    public Serializable jvnInvalidateWriterForReader() throws JvnException {
+    public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'jvnInvalidateWriterForReader'");
     }

@@ -14,21 +14,21 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
-
+import java.util.Hashtable;
 
 
 public class JvnServerImpl
 		extends UnicastRemoteObject
 		implements JvnLocalServer, JvnRemoteServer{
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 1L;
 	// A JVN server is managed as a singleton
 	private static JvnServerImpl js = null ;
 
-	private JvnRemoteCoord jvnRemoteCoord = null;
+	private JvnRemoteCoord jvnRemoteCoord;
+
+	private Hashtable<Integer, JvnObject> joiToJvnObject;
+
 	/**
 	 * Default constructor
 	 * @throws JvnException
@@ -37,6 +37,7 @@ public class JvnServerImpl
 		super();
 		Registry registry = LocateRegistry.getRegistry( 6090);
 		jvnRemoteCoord = (JvnRemoteCoord) registry.lookup("coord");
+		joiToJvnObject = new Hashtable<>();
 	}
 
 	/**
@@ -97,7 +98,9 @@ public class JvnServerImpl
 	public  JvnObject jvnLookupObject(String jon) throws jvn.JvnException{
 		try {
 			System.out.println("js: lookup");
-			return jvnRemoteCoord.jvnLookupObject(jon, this);
+			JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(jon, this);
+			joiToJvnObject.put(jvnObject.jvnGetObjectId(), jvnObject);
+			return jvnObject;
 		} catch (RemoteException e) {
 			return null;
 		}
@@ -134,14 +137,15 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public void jvnInvalidateReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(getJvnObjectName(joi), js);
-		jvnObject.jvnUnLock();
+		JvnObject jvnObject = joiToJvnObject.get(joi);
+		jvnObject.jvnInvalidateReader();
 	}
 
 	private String getJvnObjectName(int joi){
 		return "";
 
 	}
+
 	/**
 	 * Invalidate the Write lock of the JVN object identified by id 
 	 * @param joi : the JVN object id
