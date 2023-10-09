@@ -25,6 +25,9 @@ public class JvnHashObject {
     public JvnObject getJvnObject(){
         return jo;
     }
+    public void setJvnObject(JvnObject jo){
+        this.jo = jo;
+    }
     public JvnObject getObject(){
         return jo;
     }

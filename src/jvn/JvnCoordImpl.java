@@ -102,7 +102,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
         } else {
             JvnRemoteServer jsLock = hashObject.getListServerLock().get(0);
             Serializable sr = jsLock.jvnInvalidateWriterForReader(joi);
-            jvnObject.setState(JvnObject.State.R);
+            hashTableIdtoHashObject.get(joi).setJvnObject((JvnObject) sr);
             return sr;
         }
     }
@@ -130,7 +130,6 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
         return null;
     }
 
-
     /**
      * A JVN server terminates
      * @param js  : the remote reference of the server
@@ -147,10 +146,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
                 if(jsuser == 0)
                     System.out.println("Implementation jvnTerminate à completer lorsqu un objet n est plus utilise");
             }
-
-
         }
-
         System.out.println("Recu demande Terminate");
     }
 }

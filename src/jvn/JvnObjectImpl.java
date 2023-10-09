@@ -8,7 +8,7 @@ public class JvnObjectImpl implements JvnObject{
     int joi;
     JvnObjectImpl(Serializable o){
         object = o;
-        state = State.NL;
+        state = State.W;
     }
 
     public void setId(int joi){

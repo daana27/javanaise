@@ -99,6 +99,8 @@ public class JvnServerImpl
 		try {
 			System.out.println("js: lookup");
 			JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(jon, this);
+			if(jvnObject == null)
+				return null;
 			joiToJvnObject.put(jvnObject.jvnGetObjectId(), jvnObject);
 			return jvnObject;
 		} catch (RemoteException e) {
@@ -113,10 +115,14 @@ public class JvnServerImpl
 	 * @throws  JvnException
 	 **/
 	public Serializable jvnLockRead(int joi) throws JvnException {
-		// to be completed
-		return null;
-
+		try {
+			jvnRemoteCoord.jvnLockRead(joi, this);
+			return joiToJvnObject.get(joi);
+		} catch (RemoteException e) {
+			throw new RuntimeException(e);
+		}
 	}
+
 	/**
 	 * Get a Write lock on a JVN object 
 	 * @param joi : the JVN object identification
@@ -153,10 +159,8 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public Serializable jvnInvalidateWriter(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(getJvnObjectName(joi), js);
-		jvnObject.jvnUnLock();
-		return null;
-	};
+		return joiToJvnObject.get(joi).jvnInvalidateWriter();
+	}
 
 	/**
 	 * Reduce the Write lock of the JVN object identified by id 
@@ -165,10 +169,8 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public Serializable jvnInvalidateWriterForReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		// to be completed
-		// regarder le lock du jvn d id joi
-		return null;
-	};
+		return joiToJvnObject.get(joi).jvnInvalidateWriterForReader();
+	}
 }
  
   
