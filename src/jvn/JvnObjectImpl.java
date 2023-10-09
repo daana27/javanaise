@@ -65,7 +65,7 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public Serializable jvnGetSharedObject() throws JvnException {
-        return object;
+        return this.object;
     }
 
     @Override

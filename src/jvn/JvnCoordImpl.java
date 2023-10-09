@@ -30,10 +30,6 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws JvnException
      **/
     JvnCoordImpl() throws Exception {
-        // to be completed
-        // creer tableau avec [objet_reference, alias]
-        //cretaion du serveur le port
-        //tableau avec jvns ids
         hashTableIdtoHashObject = new Hashtable<>();
         hashTableNameToId = new Hashtable<>();
     }
@@ -44,7 +40,6 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException,JvnException
      **/
     public int jvnGetObjectId() throws java.rmi.RemoteException, jvn.JvnException {
-        // prend un id disponible, modification des donnees a faire
         return joi++;
     }
 
@@ -98,10 +93,8 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      **/
     public Serializable jvnLockRead(int joi, JvnRemoteServer js) throws java.rmi.RemoteException, JvnException{
         System.out.println("Coord jvnLockRead : " + joi);
-        System.out.println("taille liste = " + hashTableIdtoHashObject.size());
         JvnHashObject hashObject = hashTableIdtoHashObject.get(joi);
         System.out.println("hashobject id : " + hashObject.getJvnObjectId());
-        System.out.println("hashobject object : " + hashObject.getJvnObject());
         JvnObject jvnObject = hashObject.getJvnObject();
         JvnObject.State state = jvnObject.getState();
         if(state == JvnObject.State.NL || state == JvnObject.State.R){

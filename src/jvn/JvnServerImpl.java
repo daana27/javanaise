@@ -125,7 +125,7 @@ public class JvnServerImpl
 	public Serializable jvnLockRead(int joi) throws JvnException {
 		try {
 			joiToJvnObject.put(joi, (JvnObject) jvnRemoteCoord.jvnLockRead(joi, this));
-			return joiToJvnObject.get(joi);
+			return (Serializable) joiToJvnObject.get(joi).jvnGetSharedObject();
 		} catch (RemoteException e) {
 			throw new RuntimeException(e);
 		}
