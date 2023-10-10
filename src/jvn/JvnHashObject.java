@@ -21,6 +21,13 @@ public class JvnHashObject {
         jrsInUse.add(js);
     }
 
+    public void emptyLockServer(){
+        jsCurrentLock.clear();
+    }
+
+    public void emptyInUse(){
+        jrsInUse.clear();
+    }
     public void deleteLockServer(){
         jsCurrentLock.remove(0);
     }
@@ -29,10 +36,6 @@ public class JvnHashObject {
     }
     public void setJvnObject(JvnObject jo){
         this.jo = jo;
-    }
-
-    public void addJrsInUse(JvnRemoteServer jrs){
-        jrsInUse.add(jrs);
     }
 
     public void addToJsLock(JvnRemoteServer jrs){

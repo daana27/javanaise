@@ -61,7 +61,7 @@ public class JvnServerImpl
 	 * The JVN service is not used anymore
 	 * @throws JvnException
 	 **/
-	public  void jvnTerminate() throws jvn.JvnException {
+	public  synchronized void jvnTerminate() throws jvn.JvnException {
 		try {
 			jvnRemoteCoord.jvnTerminate(js);
 		} catch (RemoteException e) {
@@ -74,7 +74,7 @@ public class JvnServerImpl
 	 * @param o : the JVN object state
 	 * @throws JvnException
 	 **/
-	public  JvnObject jvnCreateObject(Serializable o) throws jvn.JvnException {
+	public  synchronized JvnObject jvnCreateObject(Serializable o) throws jvn.JvnException {
 		int joi;
 		try {
 			joi = jvnRemoteCoord.jvnGetObjectId();
@@ -90,10 +90,11 @@ public class JvnServerImpl
 	 * @param jo : the JVN object 
 	 * @throws JvnException
 	 **/
-	public  void jvnRegisterObject(String jon, JvnObject jo) throws jvn.JvnException, RemoteException {
-		joiToJvnObject.put(jo.jvnGetObjectId(), jo);
+	public  synchronized void jvnRegisterObject(String jon, JvnObject jo) throws jvn.JvnException, RemoteException {
+		jo.setState(JvnObject.State.W);
 		jvnRemoteCoord.jvnRegisterObject(jon, jo, this);
-
+		jo.setState(JvnObject.State.WC);
+		joiToJvnObject.put(jo.jvnGetObjectId(), jo);
 	}
 
 	/**
@@ -103,12 +104,13 @@ public class JvnServerImpl
 	 * @throws JvnException
 	 * @throws RemoteException
 	 **/
-	public  JvnObject jvnLookupObject(String jon) throws jvn.JvnException{
+	public  synchronized JvnObject jvnLookupObject(String jon) throws jvn.JvnException{
 		try {
 			System.out.println("js: lookup");
 			JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(jon, this);
 			if(jvnObject == null)
 				return null;
+			jvnObject.setState(JvnObject.State.NL);
 			joiToJvnObject.put(jvnObject.jvnGetObjectId(), jvnObject);
 			return jvnObject;
 		} catch (RemoteException e) {
@@ -122,10 +124,12 @@ public class JvnServerImpl
 	 * @return the current JVN object state
 	 * @throws  JvnException
 	 **/
-	public Serializable jvnLockRead(int joi) throws JvnException {
+	public synchronized Serializable jvnLockRead(int joi) throws JvnException {
 		try {
-			joiToJvnObject.put(joi, (JvnObject) jvnRemoteCoord.jvnLockRead(joi, this));
-			return (Serializable) joiToJvnObject.get(joi).jvnGetSharedObject();
+			JvnObject jvnObject = (JvnObject) jvnRemoteCoord.jvnLockRead(joi, this);
+			joiToJvnObject.put(joi, jvnObject);
+			System.out.println("js jvnlockread state: " + jvnObject.getState());
+			return joiToJvnObject.get(joi).jvnGetSharedObject();
 		} catch (RemoteException e) {
 			throw new RuntimeException(e);
 		}
@@ -137,9 +141,10 @@ public class JvnServerImpl
 	 * @return the current JVN object state
 	 * @throws  JvnException
 	 **/
-	public Serializable jvnLockWrite(int joi) throws JvnException {
+	public synchronized Serializable jvnLockWrite(int joi) throws JvnException {
 		try {
-			return jvnRemoteCoord.jvnLockWrite(joi, this);
+			//System.out.println("js: jvnLockWrite " + jvnRemoteCoord.jvnLockWrite(joi, this));
+			return ((JvnObject) jvnRemoteCoord.jvnLockWrite(joi, this)).jvnGetSharedObject();
 		} catch (RemoteException e) {
 			throw new RuntimeException(e);
 		}
@@ -153,14 +158,12 @@ public class JvnServerImpl
 	 * @return void
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
-	public void jvnInvalidateReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
+	public synchronized void jvnInvalidateReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
+		System.out.println("js : ivalidateReader ");
+		System.out.println("lock actuel = " + joiToJvnObject.get(joi).getState());
 		JvnObject jvnObject = joiToJvnObject.get(joi);
 		jvnObject.jvnInvalidateReader();
-	}
-
-	private String getJvnObjectName(int joi){
-		return "";
-
+		System.out.println("lock actuel = " + joiToJvnObject.get(joi).getState());
 	}
 
 	/**
@@ -169,7 +172,8 @@ public class JvnServerImpl
 	 * @return the current JVN object state
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
-	public Serializable jvnInvalidateWriter(int joi) throws java.rmi.RemoteException,jvn.JvnException {
+	public synchronized Serializable jvnInvalidateWriter(int joi) throws java.rmi.RemoteException,jvn.JvnException {
+		System.out.println("js : ivalidateWriter ");
 		return joiToJvnObject.get(joi).jvnInvalidateWriter();
 	}
 
@@ -179,8 +183,20 @@ public class JvnServerImpl
 	 * @return the current JVN object state
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
-	public Serializable jvnInvalidateWriterForReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		return joiToJvnObject.get(joi).jvnInvalidateWriterForReader();
+	public synchronized Serializable jvnInvalidateWriterForReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
+		System.out.println("js : ivalidateWriterForReader ");
+		JvnObject jvnObject = (JvnObject) joiToJvnObject.get(joi).jvnInvalidateWriterForReader();
+		jvnObject.setState(JvnObject.State.R);
+		return jvnObject;
+	}
+
+	public synchronized void setLock(int joi, JvnObject.State st){
+		if(joiToJvnObject.get(joi) != null)
+			joiToJvnObject.get(joi).setState(st);
+	}
+
+	public synchronized JvnObject.State getState(int joi){
+			return joiToJvnObject.get(joi).getState();
 	}
 }
  
