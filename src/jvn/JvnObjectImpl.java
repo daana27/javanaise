@@ -3,63 +3,47 @@ package jvn;
 import java.io.Serializable;
 
 public class JvnObjectImpl implements JvnObject{
-    State state;
+    LockState state;
     Serializable object;
     int joi;
     JvnObjectImpl(Serializable o, int joi){
         object = o;
-        state = State.W;
+        state = LockState.NL;
         this.joi = joi;
-    }
-
-    public synchronized void setId(int joi){
-        this.joi = joi;
-    }
-
-    public synchronized void setState(State st){
-        state = st;
-    }
-
-    public synchronized State getState(){
-        return state;
     }
 
     @Override
     public synchronized void jvnLockRead() throws JvnException {
         System.out.println("lockRead: joi de l objet = " + joi + " et state = " + state);
-        System.out.println("object: reader, current state = " + JvnServerImpl.jvnGetServer().getState(joi));
-        if(state == State.RC){
-            state = State.R;
-        } else if(state == State.NL){
+        if(state == LockState.RC){
+            state = LockState.R;
+        } else if(state == LockState.NL){
             System.out.println("object jvnLockRead: NL");
             object = JvnServerImpl.jvnGetServer().jvnLockRead(joi);
-            state = State.R;
-        } else if(state == State.W || state == State.WC){
-            state = State.RWC;
+            state = LockState.R;
+        } else if(state == LockState.W || state == LockState.WC){
+            state = LockState.RWC;
         }
-        JvnServerImpl.jvnGetServer().setLock(joi, state);
     }
 
     @Override
     public synchronized void jvnLockWrite() throws JvnException {
         System.out.println("lockWrite: joi de l objet = " + joi + " et state = " + state);
-        if(state == State.WC || state == State.RWC){
-            state = State.W;
-        } else if (state == State.RC || state == State.R ||state == State.NL ) {
+        if(state == LockState.WC || state == LockState.RWC){
+            state = LockState.W;
+        } else if (state == LockState.RC || state == LockState.R ||state == LockState.NL ) {
             object = JvnServerImpl.jvnGetServer().jvnLockWrite(joi);
-            state = State.W;
+            state = LockState.W;
         }
-        JvnServerImpl.jvnGetServer().setLock(joi, state);
     }
 
     @Override
     public synchronized void jvnUnLock() throws JvnException {
-        if(state == State.R){
-          state = State.RC;
-        } else if(state == State.W){
-            state = State.WC;
+        if(state == LockState.R){
+          state = LockState.RC;
+        } else if(state == LockState.W){
+            state = LockState.WC;
         }
-        JvnServerImpl.jvnGetServer().setLock(joi, state);
         System.out.println("unlock: joi de l objet = " + joi + " et state = " + state);
         notifyAll();
     }
@@ -77,39 +61,35 @@ public class JvnObjectImpl implements JvnObject{
     @Override
     public synchronized void jvnInvalidateReader() throws JvnException {
         System.out.println("object: invalidate reader, current state = " + state);
-        if(state == State.RWC || state == State.RC){
+        if(state == LockState.RC){
             System.out.println("object: invalidate reader " + state);
-            state = State.NL;
-            JvnServerImpl.jvnGetServer().setLock(joi, state);
-        } else if(state == State.R){
+            state = LockState.NL;
+        } else if(state == LockState.R || state == LockState.RWC ){
             try {
                 wait();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
-            state = State.NL;
-            JvnServerImpl.jvnGetServer().setLock(joi, state);
+            state = LockState.NL;
         }
     }
 
     @Override
     public synchronized Serializable jvnInvalidateWriter() throws JvnException {
         System.out.println("object: invalidateWriter, current state = " + state);
-        if(state == State.RWC || state == State.WC){
-            state = State.NL;
-            JvnServerImpl.jvnGetServer().setLock(joi, state);
-            return this;
-        } else if(state == State.W){
+        if(state == LockState.WC){
+            state = LockState.NL;
+            return object;
+        } else if(state == LockState.RWC ||state == LockState.W){
             try {
                 wait();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
-            state = State.NL;
-            JvnServerImpl.jvnGetServer().setLock(joi, state);
-            return this;
+            state = LockState.NL;
+            return object;
         } else{
             System.out.println("etat non concordant avec invalidate writer");
             return null;
@@ -119,21 +99,22 @@ public class JvnObjectImpl implements JvnObject{
     @Override
     public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
         System.out.println("object: invalidateWriterForReader, current state = " + state);
-        if(state == State.RWC || state == State.WC){
-            state = State.RC;
-            JvnServerImpl.jvnGetServer().setLock(joi, state);
-            return this;
-        } else if(state == State.W){
+        if(state == LockState.WC){
+            state = LockState.RC;
+            return object;
+        } else if (state == LockState.RWC || state == LockState.R){
+            state = LockState.R;
+            return object;
+        } else if(state == LockState.W ) {
             try {
                 wait();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException(e);
             }
-            state = State.RC;
-            JvnServerImpl.jvnGetServer().setLock(joi, state);
-            return this;
-        } else{
+            state = LockState.RC;
+            return object;
+        }else{
             System.out.println("etat non concordant avec invalidate writer for reader");
             return null;
         }

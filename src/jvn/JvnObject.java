@@ -16,9 +16,9 @@ import java.rmi.Remote;
  */
 
 public interface JvnObject extends Serializable {
+
 	/* A JvnObject should be serializable in order to be able to transfer
-       a reference to a JVN object remotely */
-	enum State {NL, RC, WC, R, W, RWC}
+           a reference to a JVN object remotely */
 	/**
 	 * Get a Read lock on the shared object
 	 * @throws JvnException
@@ -70,10 +70,4 @@ public interface JvnObject extends Serializable {
 	 * @throws JvnException
 	 **/
 	public Serializable jvnInvalidateWriterForReader() throws jvn.JvnException;
-
-	public void setId(int joi);
-
-	public State getState();
-
-	public void setState(State st);
 }
