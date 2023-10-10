@@ -43,6 +43,10 @@ public class JvnHashObject {
         this.state = state;
     }
 
+    public LockState getState(){
+        return state;
+    }
+
     @Override
     public String toString(){
         return "Nom: " + jon + "\n"+

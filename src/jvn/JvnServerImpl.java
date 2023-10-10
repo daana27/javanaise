@@ -152,7 +152,7 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public synchronized void jvnInvalidateReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		System.out.println("js : ivalidateReader ");
+		System.out.println("js : invalidateReader ");
 		JvnObject jvnObject = joiToJvnObject.get(joi);
 		jvnObject.jvnInvalidateReader();
 	}
@@ -164,7 +164,7 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public synchronized Serializable jvnInvalidateWriter(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		System.out.println("js : ivalidateWriter ");
+		System.out.println("js : invalidateWriter ");
 		return joiToJvnObject.get(joi).jvnInvalidateWriter();
 	}
 

@@ -39,6 +39,7 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public synchronized void jvnUnLock() throws JvnException {
+        System.out.println("unlock: joi de l objet = " + joi + " et state = " + state);
         if(state == LockState.R){
           state = LockState.RC;
         } else if(state == LockState.W){
