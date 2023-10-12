@@ -17,7 +17,7 @@ public class JvnHashObject {
         this.jon = jon;
         this.jo = jo;
         this.joi = joi;
-        state = LockState.NL;
+        state = LockState.W;
     }
     public JvnObject getJvnObject(){
         return jo;

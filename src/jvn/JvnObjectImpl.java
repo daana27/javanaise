@@ -8,7 +8,13 @@ public class JvnObjectImpl implements JvnObject{
     int joi;
     JvnObjectImpl(Serializable o, int joi){
         object = o;
-        state = LockState.NL;
+        state = LockState.W;
+        this.joi = joi;
+    }
+
+    public JvnObjectImpl(Serializable o, int joi, LockState state){
+        object = o;
+        this.state = state;
         this.joi = joi;
     }
 

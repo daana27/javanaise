@@ -56,7 +56,8 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
             System.out.println("objet deja existant ! ");
         } else {
             hashTableNameToId.put(jon, id);
-            hashTableIdtoHashObject.put(id, new JvnHashObject(jon, jo, js, id));
+            //hashTableIdtoHashObject.put(id, new JvnHashObject(jon, jo, js, id));
+            hashTableIdtoHashObject.put(id, new JvnHashObject(jon, new JvnObjectImpl(jo.jvnGetSharedObject(), id, LockState.NL), js, id));
         }
     }
 
