@@ -72,6 +72,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
         if(hashTableNameToId.get(jon) == null){
             return null;
         } else{
+            hashTableIdtoHashObject.get(hashTableNameToId.get(jon)).getServersInUse().put(js, LockState.NL);
             return hashTableIdtoHashObject.get(hashTableNameToId.get(jon)).getJvnObject();
         }
     }
@@ -100,7 +101,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
                     hashObject.setState(LockState.R);
                     ht.put(key, LockState.R);
                     ht.put(js, LockState.R);
-                    hashObject.setJvnObject(new JvnObjectImpl(serializable, hashObject.getJvnObjectId()));
+                    hashObject.setJvnObject(new JvnObjectImpl(serializable, hashObject.getJvnObjectId(), LockState.NL));
                     htString(joi);
                     return serializable;
                 }
@@ -144,7 +145,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
                     serializable = key.jvnInvalidateWriter(joi);
                     ht.put(key, LockState.NL);
                     ht.put(js, LockState.W);
-                    hashObject.setJvnObject(new JvnObjectImpl(serializable, hashObject.getJvnObjectId()));
+                    hashObject.setJvnObject(new JvnObjectImpl(serializable, hashObject.getJvnObjectId(), LockState.NL));
                     htString(joi);
                     return serializable;
                 }
