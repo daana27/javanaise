@@ -48,7 +48,7 @@ public class JvnObjectImpl implements JvnObject{
         System.out.println("unlock: joi de l objet = " + joi + " et state = " + state);
         if(state == LockState.R){
           state = LockState.RC;
-        } else if(state == LockState.W){
+        } else if(state == LockState.W || state == LockState.RWC){
             state = LockState.WC;
         }
         System.out.println("unlock: joi de l objet = " + joi + " et state = " + state);
@@ -69,7 +69,6 @@ public class JvnObjectImpl implements JvnObject{
     public synchronized void jvnInvalidateReader() throws JvnException {
         System.out.println("object: invalidate reader, current state = " + state);
         if(state == LockState.RC){
-            System.out.println("object: invalidate reader " + state);
             state = LockState.NL;
         } else if(state == LockState.R || state == LockState.RWC ){
             try {
@@ -109,7 +108,7 @@ public class JvnObjectImpl implements JvnObject{
         if(state == LockState.WC){
             state = LockState.RC;
             return object;
-        } else if (state == LockState.RWC || state == LockState.R){
+        } else if (state == LockState.RWC){
             state = LockState.R;
             return object;
         } else if(state == LockState.W ) {

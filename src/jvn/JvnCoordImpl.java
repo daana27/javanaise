@@ -54,10 +54,12 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
         int id = jo.jvnGetObjectId();
         if(hashTableIdtoHashObject.get(id) != null || hashTableNameToId.get(jon) != null){
             System.out.println("objet deja existant ! ");
+            htString(id);
         } else {
             hashTableNameToId.put(jon, id);
             //hashTableIdtoHashObject.put(id, new JvnHashObject(jon, jo, js, id));
             hashTableIdtoHashObject.put(id, new JvnHashObject(jon, new JvnObjectImpl(jo.jvnGetSharedObject(), id, LockState.NL), js, id));
+            htString(id);
         }
     }
 
@@ -73,7 +75,9 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
             return null;
         } else{
             hashTableIdtoHashObject.get(hashTableNameToId.get(jon)).getServersInUse().put(js, LockState.NL);
-            return hashTableIdtoHashObject.get(hashTableNameToId.get(jon)).getJvnObject();
+            JvnObject jo = hashTableIdtoHashObject.get(hashTableNameToId.get(jon)).getJvnObject();
+            htString(jo.jvnGetObjectId());
+            return jo;
         }
     }
 
@@ -161,8 +165,46 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public synchronized void jvnTerminate(JvnRemoteServer js) throws java.rmi.RemoteException, JvnException {
-        // si l objet n'a plus d utilisation, les upprimer
-        System.out.println("Recu demande Terminate");
+        // si l objet n'a plus d utilisation, les supprimer
+        for (JvnHashObject jvnHashObject : hashTableIdtoHashObject.values()) {
+            Hashtable<JvnRemoteServer, LockState> ht = jvnHashObject.getServersInUse();
+            if (ht.containsKey(js)){
+                LockState jhoState = jvnHashObject.getState();
+                if(jhoState == LockState.W){
+                    if(ht.get(js) == LockState.W){
+                        System.out.println("terminate invalidate writer");
+                        Serializable serializable = js.jvnInvalidateWriter(jvnHashObject.getJvnObjectId());
+                        System.out.println("terminate invalidate writer");
+                        jvnHashObject.setJvnObject(new JvnObjectImpl(serializable, jvnHashObject.getJvnObjectId(), LockState.NL));
+                        jvnHashObject.setState(LockState.NL);
+                    }
+                    ht.remove(js);
+                } else if(jhoState == LockState.R){
+                    if(ht.get(js) == LockState.NL){
+                        ht.remove(js);
+                        return;
+                    }
+                    int count = 0;
+                    for(LockState lockState : ht.values()){
+                        if(lockState == LockState.R){
+                            count++;
+                            if(count >= 2)
+                                break;
+                        }
+                    }
+                    if(count > 1)
+                        ht.remove(js);
+                    else{
+                        jvnHashObject.setState(LockState.NL);
+                        ht.remove(js);
+                    }
+                } else {
+                    ht.remove(js);
+                }
+            }
+        }
+        htString(1);
+        System.out.println("Terminate");
     }
 
     private void htString(int joi){

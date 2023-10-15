@@ -13,6 +13,7 @@ import java.awt.event.*;
 
 import jvn.*;
 import java.io.*;
+import java.util.Objects;
 
 
 public class Irc {
@@ -74,6 +75,18 @@ public class Irc {
 		frame.setSize(545,201);
 		text.setBackground(Color.black); 
 		frame.setVisible(true);
+		frame.addWindowListener( new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent we) {
+				try {
+					Objects.requireNonNull(JvnServerImpl.jvnGetServer()).jvnTerminate();
+					System.exit(0);
+				} catch (JvnException e) {
+					throw new RuntimeException(e);
+				}
+
+			}
+		} );
 	}
 }
 

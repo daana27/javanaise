@@ -61,7 +61,7 @@ public class JvnServerImpl
 	 * The JVN service is not used anymore
 	 * @throws JvnException
 	 **/
-	public  synchronized void jvnTerminate() throws jvn.JvnException {
+	public void jvnTerminate() throws jvn.JvnException {
 		try {
 			jvnRemoteCoord.jvnTerminate(js);
 		} catch (RemoteException e) {
