@@ -165,7 +165,6 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public synchronized void jvnTerminate(JvnRemoteServer js) throws java.rmi.RemoteException, JvnException {
-        // si l objet n'a plus d utilisation, les supprimer
         for (JvnHashObject jvnHashObject : hashTableIdtoHashObject.values()) {
             Hashtable<JvnRemoteServer, LockState> ht = jvnHashObject.getServersInUse();
             if (ht.containsKey(js)){
@@ -179,7 +178,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
                         jvnHashObject.setState(LockState.NL);
                     }
                     ht.remove(js);
-                } else if(jhoState == LockState.R){
+                } else if (jhoState == LockState.R){
                     if(ht.get(js) == LockState.NL){
                         ht.remove(js);
                         return;
@@ -188,22 +187,17 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
                     for(LockState lockState : ht.values()){
                         if(lockState == LockState.R){
                             count++;
-                            if(count >= 2)
-                                break;
+                            if(count >= 2){
+                                ht.remove(js);
+                                return;
+                            }
                         }
                     }
-                    if(count > 1)
-                        ht.remove(js);
-                    else{
-                        jvnHashObject.setState(LockState.NL);
-                        ht.remove(js);
-                    }
-                } else {
-                    ht.remove(js);
+                    jvnHashObject.setState(LockState.NL);
                 }
+                ht.remove(js);
             }
         }
-        htString(1);
         System.out.println("Terminate");
     }
 
