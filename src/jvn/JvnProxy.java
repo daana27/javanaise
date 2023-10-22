@@ -1,7 +1,7 @@
 package jvn;
 
-import irc.Irc;
 import irc.Sentence;
+import irc.TargetMethod;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
@@ -36,12 +36,12 @@ public class JvnProxy implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Object result;
-        if(method.getName().equals("write")){
+        if(method.getAnnotation(TargetMethod.class).name().equals("write")){
             jo.jvnLockWrite();
         } else {
             jo.jvnLockRead();
         }
-        result  = method.invoke(jo.jvnGetSharedObject(), args);
+        result = method.invoke(jo.jvnGetSharedObject(), args);
         jo.jvnUnLock();
         return result;
     }

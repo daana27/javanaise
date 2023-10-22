@@ -18,10 +18,11 @@ public class Sentence implements java.io.Serializable, ISentence {
 	public Sentence() {
 		data = new String("");
 	}
-	
+
 	public void write(String text) {
 		data = text;
 	}
+
 	public String read() {
 		return data;	
 	}
