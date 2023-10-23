@@ -21,3 +21,6 @@ In the event of a client's termination, we implemented a graceful exit strategy.
 ### Improvement : Javanaise 2
 We have implemented a proxy that encapsulates the client method calls by incorporating the locking and unlocking procedures. This allows clients to create a new instance with the object and its name as parameters. The proxy, in turn, returns a shared object and manages the locking and unlocking operations seamlessly. 
 Additionally, we used annotations to make the locking mechanisms more generic, enabling the developer to specify whether they require a read or write lock on new created object.
+
+### Test
+We have implemented a stress test that, when we open the IRC graphical window and press "read" or "write", instead of performing a single read or write, we now perform 10,000 reads or writes. When one client performs a read and another performs a write, it works correctly. However, when a second client attempts to perform a write, there is a deadlock. It is possible to have multiple clients reading simultaneously.
