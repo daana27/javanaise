@@ -8,7 +8,6 @@
 package jvn;
 
 import java.io.*;
-import java.rmi.Remote;
 
 /**
  * Interface of a JVN object.

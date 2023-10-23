@@ -50,7 +50,7 @@ public class JvnServerImpl
 			try {
 				js = new JvnServerImpl();
 			} catch (Exception e) {
-				System.out.println(e);
+				System.out.println("error in JvnServer"+ e.getMessage());
 				return null;
 			}
 		}
@@ -64,6 +64,7 @@ public class JvnServerImpl
 	public void jvnTerminate() throws jvn.JvnException {
 		try {
 			jvnRemoteCoord.jvnTerminate(js);
+			joiToJvnObject.clear();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -104,7 +105,6 @@ public class JvnServerImpl
 	 **/
 	public  synchronized JvnObject jvnLookupObject(String jon) throws jvn.JvnException{
 		try {
-			System.out.println("js: lookup");
 			JvnObject jvnObject = jvnRemoteCoord.jvnLookupObject(jon, this);
 			if(jvnObject == null)
 				return null;
@@ -152,7 +152,6 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public synchronized void jvnInvalidateReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		System.out.println("js : invalidateReader ");
 		JvnObject jvnObject = joiToJvnObject.get(joi);
 		jvnObject.jvnInvalidateReader();
 	}
@@ -164,7 +163,6 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public synchronized Serializable jvnInvalidateWriter(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		System.out.println("js : invalidateWriter ");
 		return joiToJvnObject.get(joi).jvnInvalidateWriter();
 	}
 
@@ -175,7 +173,6 @@ public class JvnServerImpl
 	 * @throws java.rmi.RemoteException,JvnException
 	 **/
 	public synchronized Serializable jvnInvalidateWriterForReader(int joi) throws java.rmi.RemoteException,jvn.JvnException {
-		System.out.println("js : invalidateWriterForReader ");
 		return joiToJvnObject.get(joi).jvnInvalidateWriterForReader();
 	}
 }
