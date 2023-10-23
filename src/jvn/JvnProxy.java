@@ -1,6 +1,5 @@
 package jvn;
 
-import irc.Sentence;
 import irc.TargetMethod;
 
 import java.io.Serializable;
@@ -11,27 +10,24 @@ public class JvnProxy implements InvocationHandler {
     JvnObject jo;
     static JvnServerImpl js;
 
-    private JvnProxy(Serializable sentence){
+    private JvnProxy(Serializable sentence, String joName){
         try {
             js = JvnServerImpl.jvnGetServer();
-            jo = js.jvnLookupObject("IRC");
-
+            jo = js.jvnLookupObject(joName);
             if (jo == null) {
                 jo = js.jvnCreateObject(sentence);
                 jo.jvnUnLock();
-                js.jvnRegisterObject("IRC", jo);
+                js.jvnRegisterObject(joName, jo);
             }
-            System.out.println("newInstance jo : " + jo);
         } catch (Exception e) {
-            System.out.println("proxy : " + e.getMessage());
+            System.out.println("error in proxy : " + e.getMessage());
         }
     }
-    public static Serializable newInstance(Serializable sentence){
+    public static Serializable newInstance(Serializable sentence, String joName){
             return (Serializable) java.lang.reflect.Proxy.newProxyInstance(
                     sentence.getClass().getClassLoader(),
                     sentence.getClass().getInterfaces(),
-                    new JvnProxy(sentence));
-
+                    new JvnProxy(sentence,joName ));
     }
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -45,7 +41,5 @@ public class JvnProxy implements InvocationHandler {
         jo.jvnUnLock();
         return result;
     }
-
-
 }
 

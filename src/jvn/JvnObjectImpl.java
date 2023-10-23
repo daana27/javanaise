@@ -20,11 +20,9 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public synchronized void jvnLockRead() throws JvnException {
-        System.out.println("lockRead: joi de l objet = " + joi + " et state = " + state);
         if(state == LockState.RC){
             state = LockState.R;
         } else if(state == LockState.NL){
-            System.out.println("object jvnLockRead: NL");
             object = JvnServerImpl.jvnGetServer().jvnLockRead(joi);
             state = LockState.R;
         } else if(state == LockState.W || state == LockState.WC){
@@ -34,7 +32,6 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public synchronized void jvnLockWrite() throws JvnException {
-        System.out.println("lockWrite: joi de l objet = " + joi + " et state = " + state);
         if(state == LockState.WC || state == LockState.RWC){
             state = LockState.W;
         } else if (state == LockState.RC || state == LockState.R ||state == LockState.NL ) {
@@ -45,13 +42,11 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public synchronized void jvnUnLock() throws JvnException {
-        System.out.println("unlock: joi de l objet = " + joi + " et state = " + state);
         if(state == LockState.R){
           state = LockState.RC;
         } else if(state == LockState.W || state == LockState.RWC){
             state = LockState.WC;
         }
-        System.out.println("unlock: joi de l objet = " + joi + " et state = " + state);
         notifyAll();
     }
 
@@ -67,7 +62,6 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public synchronized void jvnInvalidateReader() throws JvnException {
-        System.out.println("object: invalidate reader, current state = " + state);
         if(state == LockState.RC){
             state = LockState.NL;
         } else if(state == LockState.R || state == LockState.RWC ){
@@ -83,7 +77,6 @@ public class JvnObjectImpl implements JvnObject{
 
     @Override
     public synchronized Serializable jvnInvalidateWriter() throws JvnException {
-        System.out.println("object: invalidateWriter, current state = " + state);
         if(state == LockState.WC){
             state = LockState.NL;
             return object;
@@ -97,14 +90,12 @@ public class JvnObjectImpl implements JvnObject{
             state = LockState.NL;
             return object;
         } else{
-            System.out.println("etat non concordant avec invalidate writer");
             return null;
         }
     }
 
     @Override
     public synchronized Serializable jvnInvalidateWriterForReader() throws JvnException {
-        System.out.println("object: invalidateWriterForReader, current state = " + state);
         if(state == LockState.WC){
             state = LockState.RC;
             return object;
@@ -121,7 +112,6 @@ public class JvnObjectImpl implements JvnObject{
             state = LockState.RC;
             return object;
         }else{
-            System.out.println("etat non concordant avec invalidate writer for reader");
             return null;
         }
     }

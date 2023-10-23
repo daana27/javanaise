@@ -9,7 +9,6 @@
 
 package jvn;
 
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.io.Serializable;
@@ -50,16 +49,13 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException,JvnException
      **/
     public synchronized void jvnRegisterObject(String jon, JvnObject jo, JvnRemoteServer js) throws java.rmi.RemoteException, jvn.JvnException{
-        System.out.println("jcoord: register");
         int id = jo.jvnGetObjectId();
         if(hashTableIdtoHashObject.get(id) != null || hashTableNameToId.get(jon) != null){
-            System.out.println("objet deja existant ! ");
-            htString(id);
+            //htString(id);
         } else {
             hashTableNameToId.put(jon, id);
-            //hashTableIdtoHashObject.put(id, new JvnHashObject(jon, jo, js, id));
             hashTableIdtoHashObject.put(id, new JvnHashObject(jon, new JvnObjectImpl(jo.jvnGetSharedObject(), id, LockState.NL), js, id));
-            htString(id);
+            //htString(id);
         }
     }
 
@@ -70,13 +66,12 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException,JvnException
      **/
     public synchronized JvnObject jvnLookupObject(String jon, JvnRemoteServer js) throws java.rmi.RemoteException, jvn.JvnException{
-        System.out.println("jcoord: lookup sur " + jon);
         if(hashTableNameToId.get(jon) == null){
             return null;
         } else{
             hashTableIdtoHashObject.get(hashTableNameToId.get(jon)).getServersInUse().put(js, LockState.NL);
             JvnObject jo = hashTableIdtoHashObject.get(hashTableNameToId.get(jon)).getJvnObject();
-            htString(jo.jvnGetObjectId());
+            //htString(jo.jvnGetObjectId());
             return jo;
         }
     }
@@ -89,7 +84,6 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public synchronized Serializable jvnLockRead(int joi, JvnRemoteServer js) throws java.rmi.RemoteException, JvnException{
-        System.out.println("Coord jvnLockRead : " + joi);
         JvnHashObject hashObject = hashTableIdtoHashObject.get(joi);
         JvnObject jvnObject = hashObject.getJvnObject();
         Hashtable<JvnRemoteServer, LockState> ht = hashObject.getServersInUse();
@@ -97,21 +91,27 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
             ht.put(js, LockState.R);
             hashObject.setState(LockState.R);
         } else {
-            System.out.println("jstate = " + hashObject.state);
             Set<JvnRemoteServer> keys = ht.keySet();
             for(JvnRemoteServer key: keys){
                 if(ht.get(key) == LockState.W && !key.equals(js)){
-                    Serializable serializable = key.jvnInvalidateWriterForReader(joi);
+                    Serializable serializable = null;
+                    try{
+                         serializable = key.jvnInvalidateWriterForReader(joi);
+                         ht.put(key, LockState.R);
+                    }
+                    catch (Exception e){
+                        jvnTerminateClientDisruption(key);
+                        serializable = hashTableIdtoHashObject.get(joi).getJvnObject().jvnGetSharedObject();
+                    }
                     hashObject.setState(LockState.R);
-                    ht.put(key, LockState.R);
                     ht.put(js, LockState.R);
                     hashObject.setJvnObject(new JvnObjectImpl(serializable, hashObject.getJvnObjectId(), LockState.NL));
-                    htString(joi);
+                    //htString(joi);
                     return serializable;
                 }
             }
         }
-        htString(joi);
+        //htString(joi);
         return jvnObject.jvnGetSharedObject();
     }
 
@@ -123,22 +123,24 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
      * @throws java.rmi.RemoteException, JvnException
      **/
     public synchronized Serializable jvnLockWrite(int joi, JvnRemoteServer js) throws java.rmi.RemoteException, JvnException{
-        System.out.println("coord lockWrite : state = " + hashTableIdtoHashObject.get(joi).getState());
         JvnHashObject hashObject = hashTableIdtoHashObject.get(joi);
         JvnObject jvnObject = hashObject.getJvnObject();
-        Serializable serializable;
         Hashtable<JvnRemoteServer, LockState> ht = hashObject.getServersInUse();
         if(hashObject.state == LockState.NL){
             hashObject.setState(LockState.W);
             ht.put(js, LockState.W);
         } else if (hashObject.state == LockState.R){
-            System.out.println("coord lockWrite : state = R");
             Set<JvnRemoteServer> keys = ht.keySet();
             for(JvnRemoteServer key: keys){
                 if(ht.get(key) == LockState.R && !key.equals(js)){
-                    key.jvnInvalidateReader(joi);
+                    try{
+                        key.jvnInvalidateReader(joi);
+                        ht.put(key, LockState.NL);
+                    }
+                    catch (Exception e){
+                        jvnTerminateClientDisruption(key);
+                    }
                     hashObject.setState(LockState.W);
-                    ht.put(key, LockState.NL);
                     ht.put(js, LockState.W);
                 }
             }
@@ -146,16 +148,22 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
             Set<JvnRemoteServer> keys = ht.keySet();
             for(JvnRemoteServer key: keys){
                 if(ht.get(key) == LockState.W && !key.equals(js)){
-                    serializable = key.jvnInvalidateWriter(joi);
-                    ht.put(key, LockState.NL);
+                    Serializable serializable = null;
+                    try{
+                        serializable = key.jvnInvalidateWriter(joi);
+                        ht.put(key, LockState.NL);
+                    }
+                    catch (Exception e){
+                        jvnTerminateClientDisruption(key);
+                    }
                     ht.put(js, LockState.W);
                     hashObject.setJvnObject(new JvnObjectImpl(serializable, hashObject.getJvnObjectId(), LockState.NL));
-                    htString(joi);
+                    //htString(joi);
                     return serializable;
                 }
             }
         }
-        htString(joi);
+        //htString(joi);
         return jvnObject.jvnGetSharedObject();
     }
 
@@ -171,9 +179,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
                 LockState jhoState = jvnHashObject.getState();
                 if(jhoState == LockState.W){
                     if(ht.get(js) == LockState.W){
-                        System.out.println("terminate invalidate writer");
                         Serializable serializable = js.jvnInvalidateWriter(jvnHashObject.getJvnObjectId());
-                        System.out.println("terminate invalidate writer");
                         jvnHashObject.setJvnObject(new JvnObjectImpl(serializable, jvnHashObject.getJvnObjectId(), LockState.NL));
                         jvnHashObject.setState(LockState.NL);
                     }
@@ -198,9 +204,7 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
                 ht.remove(js);
             }
         }
-        System.out.println("Terminate");
     }
-
     private void htString(int joi){
         StringBuilder str = new StringBuilder();
         JvnHashObject ho = hashTableIdtoHashObject.get(joi);
@@ -213,7 +217,37 @@ public class JvnCoordImpl extends UnicastRemoteObject implements JvnRemoteCoord{
         str.append(" ]");
         System.out.println(str);
     }
+    // extension implementation: client fault management
+    public synchronized void jvnTerminateClientDisruption(JvnRemoteServer js) throws java.rmi.RemoteException, JvnException {
+        for (JvnHashObject jvnHashObject : hashTableIdtoHashObject.values()) {
+            Hashtable<JvnRemoteServer, LockState> ht = jvnHashObject.getServersInUse();
+            if (ht.containsKey(js)){
+                LockState jhoState = jvnHashObject.getState();
+                if(jhoState == LockState.W){
+                    if(ht.get(js) == LockState.W){
+                        jvnHashObject.setJvnObject(new JvnObjectImpl(jvnHashObject.getJvnObject().jvnGetSharedObject(), jvnHashObject.getJvnObjectId(), LockState.NL));
+                        jvnHashObject.setState(LockState.NL);
+                    }
+                    ht.remove(js);
+                } else if (jhoState == LockState.R){
+                    if(ht.get(js) == LockState.NL){
+                        ht.remove(js);
+                        return;
+                    }
+                    int count = 0;
+                    for(LockState lockState : ht.values()){
+                        if(lockState == LockState.R){
+                            count++;
+                            if(count >= 2){
+                                ht.remove(js);
+                                return;
+                            }
+                        }
+                    }
+                    jvnHashObject.setState(LockState.NL);
+                }
+                ht.remove(js);
+            }
+        }
+    }
 }
- 
-  
- 
